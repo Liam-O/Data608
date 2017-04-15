@@ -1,0 +1,71 @@
+<html>
+
+<!--
+	Liam Byrne
+	Data 608
+	Week 10 HW
+-->
+
+<head><title>Reversing Strings</title></head>
+	<body>
+		<h1>Liam Byrne<br><Data 608<br>Week 10</h1>
+		
+		<script type="text/javascript">
+		document.write('<p><b>Create a function to reverse any word that you type in. This can be typed into either an input box or an alert box, and then print the result in a box or on the webpage.</b></p>');
+		</script>
+		
+		<script type="text/javascript">
+			function revStr(){
+				var t = document.getElementById("target1");
+				t.innerHTML = document.getElementById("str").value.split("").reverse().join("");				
+			}
+		</script>
+
+		<p><br>Enter in a string to reverse below.<br>
+			<form name = "prob1">
+				<input id = "str" type = "text" size = 30/>
+				<input type = "button" value = "Reverse" onclick = "revStr();"/>
+			</form>
+		</p>		
+		<p id = "target1"></p>
+		
+		<script type="text/javascript">
+		document.write('<p><b>Create a function that takes an input number, and prints a table with the first 20 multiples of the number, in order on a 5x4 matrix.</p></b>');
+		</script>
+		
+		<script type="text/javascript">
+			function multMat(){
+				var n = document.getElementById("num").value;
+				var n_rows = 5;
+				var n_cols = 4;
+				var theader = '<table border="1">\n';
+				var tbody = '';
+				var mult = 1;
+
+				for( var i=0; i<n_rows;i++)
+				{
+					tbody += '<tr>';
+					for( var j=0; j<n_cols;j++)
+					{
+						tbody += '<td>';
+						tbody += n*mult++;
+						tbody += '</td>'
+					}
+					tbody += '</tr>\n';
+				}
+				var tfooter = '</table>';
+				var t2 = document.getElementById('target2');
+				t2.innerHTML = theader + tbody + tfooter;
+			}
+		</script>
+		
+		<p><br>Enter in a number to create the first 20 multiples 5x4 matrix.<br>
+			<form name = "prob2">
+				<input id = "num" type = "number" size = 10/>
+				<input type = "button" value = "Multiples" onclick = "multMat();"/>
+			</form>
+		</p>		
+		
+		<p id = "target2"></p><br>
+	</body>
+</html>

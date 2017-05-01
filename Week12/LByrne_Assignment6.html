@@ -1,0 +1,118 @@
+<html>
+
+<!--
+	Liam Byrne
+	Data 608
+	Week 12 HW
+-->
+
+<head>
+<!--Plotly.js-->
+		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+<div class="showcase__section" id="bubble">
+  <div class="spacer --small"></div>
+  <div id="bubbleplots">
+    <div class="bubbleplot" data-num="0">
+      <div class="plot" id="plotdiv"></div>
+      <div class="control-row">
+        Neighborhood: <select class="Neighbordata">
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+      
+<script>
+
+// Used methodology from example at https://plot.ly/javascript/dropdowns/
+
+Plotly.d3.csv('https://raw.githubusercontent.com/Liam-O/Data608/master/FinalPro/ppsf_nyc.csv', function(rows){
+
+    function unpack(rows, key) {
+        return rows.map(function(row) { return row[key]; });
+    }
+
+	//creating data arrays
+	var Borough = unpack(rows, 'CountyName'),
+    Neighborhood = unpack(rows, 'RegionName'),
+    Date = unpack(rows, 'Date'),
+    Price = unpack(rows, 'Price'),
+    listofNeighbors = [],
+    currentNeighbor,
+    currentDate = [],
+    currentPrice = [];
+   
+  // Create unqiue list of Neighborhoods
+  for (var i = 0; i < Neighborhood.length; i++ ) {
+    if (listofNeighbors.indexOf(Neighborhood[i]) === -1 ){
+      listofNeighbors.push(Neighborhood[i]);
+    }
+  }
+  
+  // Set respective date and price for plot data
+  function getData(neighbor) {
+    currentDate = [],
+    currentPrice = [];
+    for (var i = 0 ; i < Neighborhood.length ; i++){
+      if ( Neighborhood[i] === neighbor ) {
+        currentDate.push(Date[i]);
+        currentPrice.push(Price[i]);
+      } 
+    }
+  };
+  
+	// Set  plot to Default Neighborhood
+	setPlot('Arverne')
+	
+	// render plot
+	function setPlot (chosenNeighbor) {
+		getData(chosenNeighbor);
+		
+		var trace1 = {
+		  x : currentDate,
+		  y : currentPrice,
+		  mode: 'lines',		  
+		};
+    
+		//set data  and layout
+		var data = [trace1];
+		var layout = {
+		  title: 'Median Price per Square Foot for <br>' + chosenNeighbor,
+		  yaxis : {
+			title : 'Price per sq ft'
+		  }
+		};
+		
+		//Plot to div
+		Plotly.newPlot('plotdiv', data, layout)
+	};
+  
+  	var innerContainer = document.querySelector('[data-num="0"'),
+    plotEl = innerContainer.querySelector('.plot'),
+    NeighborSelector = innerContainer.querySelector('.Neighbordata');
+
+	//Create dropdown list
+	function assignOptions(textArray, selector) {
+		for (var i = 0; i < textArray.length;  i++) {
+			var currentOption = document.createElement('option');
+			currentOption.text = textArray[i];
+			selector.appendChild(currentOption);
+    }
+  }
+  
+  assignOptions(listofNeighbors.sort(), NeighborSelector);
+
+  function updateNeighbor(){
+    setPlot(NeighborSelector.value);
+  }
+  
+  //dropdown listener
+  NeighborSelector.addEventListener('change', updateNeighbor, false);
+});
+
+</script>
+</body>
+
+		

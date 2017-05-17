@@ -25,8 +25,11 @@
 # nyc_data <- left_join(nyc_data, nyc_geo@data, by = c("Borough", "Neighborhood"))
 # nyc_data <- na.omit(nyc_data)
 # nyc_data$Date <- as.Date(nyc_data$Date)
-
-limits <- bbox(nyc_geo)
+#
+# indicators <- read.csv("https://raw.githubusercontent.com/Liam-O/Data608/master/FinalPro/nyc_indicators.csv",
+#                        stringsAsFactors = FALSE)
+#
+# limits <- bbox(nyc_geo)
 
 function(input, output, session) {
 
@@ -92,15 +95,21 @@ function(input, output, session) {
         data_render <- getSubData()
 
         #create color pallete for map
-        pal <- colorQuantile("RdBu", domain = data_render@data$val,
-                             n = 8, na.color = "#bdbdbd")
+        pal <- colorNumeric("RdBu",
+                            domain = data_render@data$val,
+                            na.color = "#bdbdbd")
 
         #Pop-up
+        indic_symbol <- indicators$Indicator.Symbol[input$indic == indicators$Indicator.Code]
         nyc_pop <- paste0("<strong>", input$indic, "</strong><br>",
                           "<strong> Neighborhood: </strong>",
                           data_render$Neighborhood, ", ", data_render$Borough, "<br>",
                           "<strong>", input$span, " Year(s) ", input$stat, ":</strong> ",
-                          data_render$val)
+                          ifelse(
+                              indic_symbol == "$",
+                              paste0(indic_symbol,data_render$val),
+                              paste0(data_render$val, indic_symbol))
+                          )
 
         #Render on change
         leafletProxy("nycMap", data = data_render) %>%
@@ -117,6 +126,10 @@ function(input, output, session) {
                         popup = nyc_pop) %>%
             clearControls() %>%
             addLegend(pal = pal, values = data_render$val,
-                      position = "bottomright")
+                      position = "bottomright",
+                      title = paste0(input$indic, ifelse(indic_symbol %in% c("$", "%"),
+                                                         paste0(" (In ", indic_symbol, ")"), "")
+                                     )
+                      )
     })
 }

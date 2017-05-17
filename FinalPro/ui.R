@@ -22,7 +22,7 @@ bootstrapPage(
                               selected = "max"),
                   selectInput("span", "Years Spanned",
                               choices = c(1, 2, 4, 8),
-                              selected = 1)
+                              selected = 8)
     )
 )
 

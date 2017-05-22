@@ -1,4 +1,4 @@
-library(ggplot2)
+library(hexbin)
 library(dplyr)
 library(tidyr)
 library(leaflet)
@@ -31,10 +31,16 @@ nyc_data$Date <- as.Date(nyc_data$Date)
 indicators <- read.csv("https://raw.githubusercontent.com/Liam-O/Data608/master/FinalPro/nyc_indicators.csv",
                        stringsAsFactors = FALSE)
 
+#Remove indicators that do not appear in dataset
+indicators <- indicators %>%
+    filter(indicators$Indicator.Code %in% unique(nyc_data$indicator))
+
+#Set view for map
 limits <- bbox(nyc_geo)
 
 function(input, output, session) {
 
+    #Check to see if subset data has data and display message if not
     check_data <- function(x) {
         if (all(is.na(x))) {
             showModal(modalDialog(
@@ -46,7 +52,7 @@ function(input, output, session) {
         else NULL
     }
 
-    #Get plot data
+    #Get plot data from click event
     getPlotData <- reactive({
 
         hood <- click_data$clickedShape
@@ -66,17 +72,21 @@ function(input, output, session) {
 
     #Subset data based on input
     getSubData <- reactive({
+        #group data by respective paramters
         nyc_dynam <- nyc_data %>%
             filter((indicator == input$indic) &
                        (as.numeric(format(Date, "%Y")) >= (2017 - (as.numeric(input$span) - 1)))
             )
+
         if (input$boro != "All") {
             nyc_dynam <- nyc_dynam %>%
                 filter(Borough == input$boro)
         }
 
+        #group by neighborhood
         nyc_dynam <- group_by(nyc_dynam, RegionID)
 
+        #Use respective statistic on grouped data
         if(input$stat == "max") {
             nyc_dynam <- nyc_dynam %>%
                 summarise(val = max(value))
@@ -94,12 +104,14 @@ function(input, output, session) {
                 summarise(val = median(value))
         }
 
+        #Round value for display purposes
         nyc_dynam$val <- round(nyc_dynam$val, 2)
 
         #Join subsetted data with map object by common key, ReigonID
         nyc_map <- nyc_geo
         nyc_map@data <- left_join(nyc_map@data, nyc_dynam, by = "RegionID")
 
+        #return subset data
         nyc_map
     })
 
@@ -110,19 +122,15 @@ function(input, output, session) {
             setView(lng = mean(limits[1,]), lat = mean(limits[2,]), zoom = 10)
         })
 
-    # Indicator Selector
-    output$indicSelector <- renderUI ({
-        indic_lst <- sort(indicators$Indicator.Code)
-        selectInput("indic", "Real Estate Indicator",
-                    choices = indic_lst, selected = "All Homes")
-    })
-
+    #Setup methods to catch what shape is clicked on
     click_data <- reactiveValues(clickedShape = NULL)
     observeEvent(input$nycMap_shape_click, {
         click_data$clickedShape <- input$nycMap_shape_click$id
     })
 
+    #Display plot of values on click event
     output$plot <- renderPlotly({
+
         plot_ly(getPlotData(), x = ~Date, y = ~value,
                 type = "scatter", mode = "lines") %>%
             layout(title = paste0(input$indic, "<br>for ",
@@ -140,8 +148,11 @@ function(input, output, session) {
             check_data(data_render@data$val)
         )
 
-        pal <- colorNumeric("RdBu",
+        #Create color pallete, binned on quantiles
+        pal <- colorBin("RdYlBu",
                             domain = data_render@data$val,
+                            bins = quantile(data_render@data$val, probs = seq(0, 1, .1), na.rm = TRUE),
+                            reverse = TRUE,
                             na.color = "#bdbdbd")
 
         #Pop-up
